@@ -38,10 +38,11 @@ public:
     using TSDFVolumeBase::TSDFVolumeBase;
     void Reset() override { PYBIND11_OVERLOAD_PURE(void, TSDFVolumeBase, ); }
     void Integrate(const geometry::RGBDImage &image,
+                   const geometry::Image &detection_img,
                    const camera::PinholeCameraIntrinsic &intrinsic,
                    const Eigen::Matrix4d &extrinsic) override {
-        PYBIND11_OVERLOAD_PURE(void, TSDFVolumeBase, image, intrinsic,
-                               extrinsic);
+        PYBIND11_OVERLOAD_PURE(void, TSDFVolumeBase, image, detection_img,
+                               intrinsic, extrinsic);
     }
     std::shared_ptr<geometry::PointCloud> ExtractPointCloud() override {
         PYBIND11_OVERLOAD_PURE(std::shared_ptr<geometry::PointCloud>,
@@ -68,7 +69,7 @@ void pybind_integration_classes(py::module &m) {
                  "Function to reset the integration::TSDFVolume")
             .def("integrate", &integration::TSDFVolume::Integrate,
                  "Function to integrate an RGB-D image into the volume",
-                 "image"_a, "intrinsic"_a, "extrinsic"_a)
+                 "image"_a, "detection_img"_a, "intrinsic"_a, "extrinsic"_a)
             .def("extract_point_cloud",
                  &integration::TSDFVolume::ExtractPointCloud,
                  "Function to extract a point cloud with normals")
@@ -88,11 +89,14 @@ void pybind_integration_classes(py::module &m) {
             uniform_tsdfvolume);
     uniform_tsdfvolume
             .def(py::init([](double length, int resolution, double sdf_trunc,
-                             integration::TSDFVolumeColorType color_type) {
+                             integration::TSDFVolumeColorType color_type,
+                             const Eigen::Vector3d &origin = Eigen::Vector3d::Zero()) {
                      return new integration::UniformTSDFVolume(
-                             length, resolution, sdf_trunc, color_type);
+                             length, resolution, sdf_trunc, color_type, origin);
                  }),
-                 "length"_a, "resolution"_a, "sdf_trunc"_a, "color_type"_a)
+                 "length"_a, "resolution"_a, "sdf_trunc"_a, "color_type"_a, "origin"_a)
+            .def(py::init([](integration::UniformTSDFVolume vol) {
+            return new integration::UniformTSDFVolume(vol);}), "vol"_a)
             .def("__repr__",
                  [](const integration::UniformTSDFVolume &vol) {
                      return std::string("integration::UniformTSDFVolume ") +
@@ -106,7 +110,11 @@ void pybind_integration_classes(py::module &m) {
                  &integration::UniformTSDFVolume::ExtractVoxelPointCloud)
             .def_readwrite("length", &integration::UniformTSDFVolume::length_)
             .def_readwrite("resolution",
-                           &integration::UniformTSDFVolume::resolution_);
+                           &integration::UniformTSDFVolume::resolution_)
+            .def_readwrite("tsdf", &integration::UniformTSDFVolume::tsdf_)
+            .def_readwrite("weight", &integration::UniformTSDFVolume::weight_)
+            .def_readwrite("color", &integration::UniformTSDFVolume::color_)
+            .def_readwrite("obj_detection", &integration::UniformTSDFVolume::obj_detection_);
 
     py::class_<integration::ScalableTSDFVolume,
                PyTSDFVolume<integration::ScalableTSDFVolume>,
@@ -135,7 +143,9 @@ void pybind_integration_classes(py::module &m) {
                                      : std::string("with color."));
                  })
             .def("extract_voxel_point_cloud",
-                 &integration::ScalableTSDFVolume::ExtractVoxelPointCloud);
+                 &integration::ScalableTSDFVolume::ExtractVoxelPointCloud)
+            .def("get_tsdf_at", &integration::ScalableTSDFVolume::GetTSDFAt,
+                 "Give the TSDF value at a given voxel", "p"_a);
 }
 
 void pybind_integration_methods(py::module &m) {

@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
                 (every_k_frames > 0 && index % every_k_frames == 0)) {
                 volume.Reset();
             }
-            volume.Integrate(*rgbd,
+            volume.Integrate(*rgbd, rgbd->depth_,
                              camera_trajectory->parameters_[index].intrinsic_,
                              camera_trajectory->parameters_[index].extrinsic_);
             index++;

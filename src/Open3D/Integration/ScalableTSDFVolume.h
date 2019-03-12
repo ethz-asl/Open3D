@@ -76,11 +76,13 @@ public:
 public:
     void Reset() override;
     void Integrate(const geometry::RGBDImage &image,
+                   const geometry::Image &detection_img,
                    const camera::PinholeCameraIntrinsic &intrinsic,
                    const Eigen::Matrix4d &extrinsic) override;
     std::shared_ptr<geometry::PointCloud> ExtractPointCloud() override;
     std::shared_ptr<geometry::TriangleMesh> ExtractTriangleMesh() override;
     std::shared_ptr<geometry::PointCloud> ExtractVoxelPointCloud();
+    double GetTSDFAt(const Eigen::Vector3d &p);
 
 public:
     int volume_unit_resolution_;
@@ -106,8 +108,6 @@ private:
             const Eigen::Vector3i &index);
 
     Eigen::Vector3d GetNormalAt(const Eigen::Vector3d &p);
-
-    double GetTSDFAt(const Eigen::Vector3d &p);
 };
 
 }  // namespace integration
