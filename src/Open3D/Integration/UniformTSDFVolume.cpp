@@ -369,15 +369,13 @@ void UniformTSDFVolume::IntegrateWithDepthToCameraDistanceMultiplier(
                                                 (*p_weight + 1.0f);
                                     }
                                     *p_obj_detection = ((*p_obj_detection) * (*p_weight)
-                                        + *detection) / (*p_weight + 1.0f);
+                                        + (*detection) * (1 - std::fabs(sdf / sdf_trunc_f)))
+                                        / (*p_weight + 1.0f);
                                 }
-                                *p_weight = std::min(*p_weight + 1.0f, max_weight_);
-                            }
-                        }
-                        else {
-                            if(*detection > 0.0f) {
-                                *p_obj_detection = ((*p_obj_detection) * (*p_weight) 
-                                                    + *detection) / (*p_weight + 1.0f);
+                                else {
+                                    *p_obj_detection = ((*p_obj_detection) * (*p_weight))
+                                        / (*p_weight + 1.0f);  // voxel carving
+                                }
                                 *p_weight = std::min(*p_weight + 1.0f, max_weight_);
                             }
                         }
